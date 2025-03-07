@@ -21,7 +21,7 @@ function Install-NerdFonts {
     param (
         [string]$FontName = "CascadiaCode",
         [string]$FontDisplayName = "CaskaydiaCove NF",
-        [string]$Version = "3.2.1"
+        [string]$Version = "3.3.0"
     )
 
     try {
