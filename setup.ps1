@@ -79,7 +79,7 @@ if (!(Test-Path -Path $PROFILE -PathType Leaf)) {
             New-Item -Path $profilePath -ItemType "directory"
         }
 
-        Invoke-RestMethod https://github.com/ChrisTitusTech/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
+        Invoke-RestMethod https://github.com/kawells/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
         Write-Host "The profile @ [$PROFILE] has been created."
         Write-Host "If you want to make any personal changes or customizations, please do so at [$profilePath\Profile.ps1] as there is an updater in the installed profile which uses the hash to update the profile and will lead to loss of changes"
     }
@@ -90,7 +90,7 @@ if (!(Test-Path -Path $PROFILE -PathType Leaf)) {
 else {
     try {
         Get-Item -Path $PROFILE | Move-Item -Destination "oldprofile.ps1" -Force
-        Invoke-RestMethod https://github.com/ChrisTitusTech/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
+        Invoke-RestMethod https://github.com/kawells/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
         Write-Host "The profile @ [$PROFILE] has been created and old profile removed."
         Write-Host "Please back up any persistent components of your old profile to [$HOME\Documents\PowerShell\Profile.ps1] as there is an updater in the installed profile which uses the hash to update the profile and will lead to loss of changes"
     }
@@ -109,6 +109,7 @@ catch {
 
 # Font Install
 Install-NerdFonts -FontName "CascadiaCode" -FontDisplayName "CaskaydiaCove NF"
+Install-NerdFonts -FontName 'Meslo' -FontDisplayName "Meslo LG"
 
 # Final check and message to the user
 if ((Test-Path -Path $PROFILE) -and (winget list --name "OhMyPosh" -e) -and ($fontFamilies -contains "CaskaydiaCove NF")) {
@@ -132,6 +133,7 @@ try {
 catch {
     Write-Error "Failed to install Terminal Icons module. Error: $_"
 }
+
 # zoxide Install
 try {
     winget install -e --id ajeetdsouza.zoxide
@@ -140,3 +142,37 @@ try {
 catch {
     Write-Error "Failed to install zoxide. Error: $_"
 }
+
+# Terminal Dracula Theme install
+$fragmentPath = "$env:LOCALAPPDATA\Microsoft\Windows Terminal\Fragments\Dracula\dracula.json"
+$fragmentDir = [System.IO.Path]::GetDirectoryName($fragmentPath)
+if (-not (Test-Path -Path $fragmentDir)) { New-Item -ItemType Directory -Path $fragmentDir -Force }
+try {
+    $draculaScheme = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/dracula/windows-terminal/refs/heads/master/dracula.json'
+    Write-Host 'Successfully downloaded Dracula color scheme'
+}
+catch {
+    Write-Error "Failed to download Dracula color scheme: $_"
+    exit 1
+}
+$fragmentContent = @{
+    schemes  = @($draculaScheme)
+    profiles = @{
+        defaults = @{
+            colorScheme = 'Dracula'
+        }
+    }
+}
+$fragmentContent | ConvertTo-Json -Depth 32 | Set-Content -Path $fragmentPath
+Write-Output "Fragment has been created successfully at $fragmentPath"
+#Write-Output 'Restart Windows Terminal and then select or set the theme in your profile'
+$settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+$settings = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
+if (-not $settings.profiles.defaults) { $settings.profiles | Add-Member -Type NoteProperty -Name "defaults" -Value @{} }
+$settings.profiles.defaults.font.face = "CaskaydiaCove Nerd Font Mono"
+Write-Host "Set default Terminal font to CaskaydiaCove Nerd Font Mono"
+# Set Dracula as the default color scheme
+$settings.profiles.defaults.colorScheme = "Dracula"
+Write-Host "Set Dracula as default color scheme"
+# Convert back to JSON and save
+$settings | ConvertTo-Json -Depth 32 | Set-Content -Path $settingsPath
