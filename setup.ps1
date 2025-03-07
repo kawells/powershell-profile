@@ -165,14 +165,16 @@ $fragmentContent = @{
 }
 $fragmentContent | ConvertTo-Json -Depth 32 | Set-Content -Path $fragmentPath
 Write-Output "Fragment has been created successfully at $fragmentPath"
-#Write-Output 'Restart Windows Terminal and then select or set the theme in your profile'
 $settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
 $settings = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
 if (-not $settings.profiles.defaults) { $settings.profiles | Add-Member -Type NoteProperty -Name "defaults" -Value @{} }
-$settings.profiles.defaults.font.face = "CaskaydiaCove Nerd Font Mono"
-Write-Host "Set default Terminal font to CaskaydiaCove Nerd Font Mono"
-# Set Dracula as the default color scheme
-$settings.profiles.defaults.colorScheme = "Dracula"
-Write-Host "Set Dracula as default color scheme"
-# Convert back to JSON and save
+if (-not $settings.profiles.defaults.font) { $settings.profiles.defaults | Add-Member -Type NoteProperty -Name "font" -Value @{} }
+if (-not $settings.profiles.defaults.font.face) {
+    $settings.profiles.defaults.font | Add-Member -Type NoteProperty -Name "face" -Value "CaskaydiaCove Nerd Font Mono"
+    Write-Host 'Set default Terminal font to CaskaydiaCove Nerd Font Mono'
+}
+if (-not $settings.profiles.defaults.colorScheme) {
+    $settings.profiles.defaults | Add-Member -Type NoteProperty -Name 'colorScheme' -Value 'Dracula'
+    Write-Host 'Set Dracula as default color scheme'
+}
 $settings | ConvertTo-Json -Depth 32 | Set-Content -Path $settingsPath
