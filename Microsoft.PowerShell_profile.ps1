@@ -627,7 +627,7 @@ if (Test-Path "$PSScriptRoot\CTTcustom.ps1") {
     Invoke-Expression -Command "& `"$PSScriptRoot\CTTcustom.ps1`""
 }
 if (Test-Path "$PSScriptRoot\kw_profile.ps1") {
-    Invoke-Expression -Command "& `"$PSScriptRoot\kw_profile.ps1`""
+   . "$PSScriptRoot\kw_profile.ps1"
 }
 
 Write-Host "$($PSStyle.Foreground.Yellow)Use 'Show-Help' to display help$($PSStyle.Reset)"
